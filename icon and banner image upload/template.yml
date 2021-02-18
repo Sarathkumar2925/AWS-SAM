@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  icon and banner image upload
+Transform:
+- AWS::Serverless-2016-10-31
+Resources:
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+        - GET
+        - POST
+        - DELETE
+        - OPTIONS
+        AllowHeaders:
+        - '*'
+        AllowOrigins:
+        - '*'
+  S3LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/lambda-S3.handler
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A Lambda function that returns S3 upload and download.
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          UploadBucket:
+            Ref: S3Bucket
+      Policies:
+      - S3CrudPolicy:
+          BucketName:
+            Ref: S3Bucket
+      Events:
+        Upload:
+          Type: HttpApi
+          Properties:
+            Path: /uploads
+            Method: get
+            ApiId:
+              Ref: Api
+        Download:
+          Type: HttpApi
+          Properties:
+            Path: /downloads
+            Method: get
+            ApiId:
+              Ref: Api
+  S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        CorsConfiguration:
+          CorsRules:
+          - AllowedHeaders:
+            - '*'
+            AllowedMethods:
+            - GET
+            - PUT
+            - HEAD
+            AllowedOrigins:
+            - '*'
